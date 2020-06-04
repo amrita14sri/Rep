@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:wsc="http://www.mulesoft.org/schema/mule/wsc"
+	xmlns:american-flights-api="http://www.mulesoft.org/schema/mule/american-flights-api"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/american-flights-api http://www.mulesoft.org/schema/mule/american-flights-api/current/mule-american-flights-api.xsd
+http://www.mulesoft.org/schema/mule/wsc http://www.mulesoft.org/schema/mule/wsc/current/mule-wsc.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<configuration-properties doc:name="Configuration properties" doc:id="d4f608c2-3811-4df0-999c-7cf133fb0820" file="config.yaml" />
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="9e3d7971-85e9-45bd-91f6-23acbf78acde" >
+		<http:listener-connection host="0.0.0.0" port="${http.port}" />
+	</http:listener-config>
+	<american-flights-api:config name="American_Flights_API_Config" doc:name="American Flights API Config" doc:id="c587e7ec-1aa7-44eb-9ef3-af66745f11af" property_host="${american.host}" property_port="${american.port}" property_protocol="${american.protocol}" property_basePath="${american.basepath}" />
+	<http:request-config name="HTTP_Request_configuration" doc:name="HTTP Request configuration" doc:id="1d6a90aa-166d-41f3-9e95-c9001d4de29f" basePath="${training.basepath}" >
+		<http:request-connection host="${training.host}" port="${training.port}" />
+	</http:request-config>
+	<wsc:config name="Delta_Web_Service_Consumer_Config" doc:name="Web Service Consumer Config" doc:id="2892d4c3-7c18-4e4a-9504-0c9751500885" >
+		<wsc:connection wsdlLocation="${delta.wsdl}" service="${delta.service}" port="${delta.port}" >
+			<wsc:web-service-security actor="http://schemas.xmlsoap.org/soap/actor/next" />
+		</wsc:connection>
+	</wsc:config>
+	<configuration doc:name="Configuration" doc:id="7557160d-ffe1-4483-b94c-b5f13f5fcc47" defaultErrorHandler-ref="globalError_Handler" />
+	<error-handler name="globalError_Handler" doc:id="afcabd71-4191-4a1a-8267-e50846aba09b" >
+		<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="4a772e21-ef6b-45b1-9dba-fa4312e48223" type="WSC:CONNECTIVITY,WSC:INVALID_WSDL">
+			<ee:transform doc:name="Data unavailable" doc:id="b506c387-084e-4b90-a897-4e8d95779cfc">
+				<ee:message>
+					<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+"message": "Data unavailable, Try later. " ++ error.description as String
+}
+]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+		</on-error-propagate>
+		<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="ebfafc2c-fdcc-45f3-a271-b8e2fa177eea" type="ANY">
+			<ee:transform doc:name="error.description" doc:id="e5914e91-8a2f-4dd3-9a18-abe496682549" >
+				<ee:message >
+					<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"message": "the message is "++ error.description as String
+ }]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+		</on-error-propagate>
+	</error-handler>
+</mule>
