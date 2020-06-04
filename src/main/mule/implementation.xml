@@ -235,3 +235,5 @@ payload.body.ns0#findFlightResponse.*return map ( return , indexOfReturn ) -> {
 		<logger level="INFO" doc:name="Logger" doc:id="ab793712-ae3e-411f-a5e0-610fe57c4dd7" message="#[payload]"/>
 	</flow>
 </mule>
+
+<!-- comment -->
